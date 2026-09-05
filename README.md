@@ -1,4 +1,4 @@
-<img alt="SPACE Logo" src="/assets/space.svg" title="SPACE Logo" width="250"/>
+<img alt="SPACE Logo" src="/assets/SPACE.svg" title="SPACE Logo" width="250"/>
 
 SPACE is a convolution reverb where you can load reverb impulse responses. It offers basic functionality and a post-effect EQ for the wet signal.
 
