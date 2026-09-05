@@ -22,6 +22,9 @@ Follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 
 ### Changed
 
+- Formats : **Fx|Reverb** to VST3, **lv2:ReverbPlugin** to LV2, **reverb** to
+  CLAP, and **Reverb** to AAX.
+- The CLAP build declares that it handles mono/stereo.
 - `Theme`'s accessors are lookups rather than constants. The shipped values, the editor
   labels and the file keys are generated from one list (`ui/ThemeRoles.h`), so the enum,
   the table, the `.celthm` format and the editor's rows cannot drift apart.
