@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "ui/AboutPanel.h"
+#include "ui/ThemePanel.h"
 #include "ui/EqDisplay.h"
 #include "ui/IconButton.h"
 #include "ui/ParameterControl.h"
@@ -23,7 +24,8 @@
     either half of what you were doing.
 */
 class PluginEditor : public juce::AudioProcessorEditor,
-                     private juce::Timer
+                     private juce::Timer,
+                     private juce::ChangeListener
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -42,6 +44,14 @@ private:
     void loadImpulseResponse (const juce::File&);
 
     void showSettingsMenu();
+
+    /** The colours this window takes once rather than reading as it draws. See the
+        note in Theme.h about snapshots. */
+    void applyColours();
+
+    /** The theme moved. Re-reads the look and feel's colours, tells every child, and
+        repaints -- which is the whole of what a theme change is from here. */
+    void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void refreshBypassLook();
 
     /** Only the edge that moved, so a drag of one does not record host automation for

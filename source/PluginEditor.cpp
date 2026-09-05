@@ -66,7 +66,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     wordmarkText.setText (juce::String (JucePlugin_Name).toLowerCase(), juce::dontSendNotification);
     wordmarkText.setFont (Fonts::logo (22.0f));
-    wordmarkText.setColour (juce::Label::textColourId, Theme::text());
     wordmarkText.setJustificationType (juce::Justification::centredLeft);
     wordmarkText.setInterceptsMouseClicks (false, false);
     addChildComponent (wordmarkText);
@@ -89,7 +88,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     {
         label.setText (text, juce::dontSendNotification);
         label.setFont (Fonts::bold (10.0f));
-        label.setColour (juce::Label::textColourId, Theme::textDim());
         label.setJustificationType (juce::Justification::centredLeft);
         label.setInterceptsMouseClicks (false, false);
         addAndMakeVisible (label);
@@ -99,7 +97,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     title (eqTitle, "POST EQ");
 
     irStatus.setFont (Fonts::light (11.0f));
-    irStatus.setColour (juce::Label::textColourId, Theme::comment());
     irStatus.setJustificationType (juce::Justification::centredLeft);
     irStatus.setInterceptsMouseClicks (false, false);
     addAndMakeVisible (irStatus);
@@ -116,8 +113,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     loadButton.setTooltip ("Load a response to convolve with. A file can also be "
                            "drag-and-dropped.");
-    loadButton.setColour (juce::TextButton::buttonColourId, Theme::record().withAlpha (0.22f));
-    loadButton.setColour (juce::TextButton::textColourOffId, Theme::record().brighter (0.35f));
     loadButton.onClick = [this] { chooseImpulseResponse(); };
     addAndMakeVisible (loadButton);
 
@@ -165,10 +160,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     zoomButton.setTooltip ("Zoom to the first few milliseconds, for precise adjustments.");
     zoomButton.setClickingTogglesState (true);
-    zoomButton.setColour (juce::TextButton::buttonColourId, Theme::surface());
-    zoomButton.setColour (juce::TextButton::buttonOnColourId, Theme::accent());
-    zoomButton.setColour (juce::TextButton::textColourOffId, Theme::text());
-    zoomButton.setColour (juce::TextButton::textColourOnId, Theme::chrome());
     zoomButton.onClick = [this]
     {
         waveform.setZoomed (zoomButton.getToggleState());
@@ -177,8 +168,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (zoomButton);
 
     eqResetButton.setTooltip ("Reset the EQ settings.");
-    eqResetButton.setColour (juce::TextButton::buttonColourId, Theme::surface());
-    eqResetButton.setColour (juce::TextButton::textColourOffId, Theme::text());
     eqResetButton.onClick = [this] { resetEq(); };
     addAndMakeVisible (eqResetButton);
 
@@ -210,11 +199,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     setSize (storedWidth, storedHeight);
 
     processorRef.setUiActive (true);
+
+    applyColours();
+
+    // The theme is process-wide, so a colour changed in one window has to reach every
+    // other -- including this one, when the change was made somewhere else.
+    Theme::palette().addChangeListener (this);
     startTimerHz (30);
 }
 
 PluginEditor::~PluginEditor()
 {
+    Theme::palette().removeChangeListener (this);
+
     processorRef.setUiActive (false);
     setLookAndFeel (nullptr);
 }
@@ -501,9 +498,51 @@ void PluginEditor::beginFadeGesture (WaveformDisplay::Fade fade, bool starting)
 }
 
 //==============================================================================
+void PluginEditor::applyColours()
+{
+    wordmarkText.setColour (juce::Label::textColourId, Theme::text());
+
+    for (auto* label : { &irTitle, &eqTitle })
+        label->setColour (juce::Label::textColourId, Theme::textDim());
+
+    irStatus.setColour (juce::Label::textColourId, Theme::comment());
+
+    // Red is what "this is armed" looks like everywhere else in the house, and loading
+    // a response is the one thing here that replaces what you were listening to.
+    loadButton.setColour (juce::TextButton::buttonColourId, Theme::record().withAlpha (0.22f));
+    loadButton.setColour (juce::TextButton::textColourOffId, Theme::record().brighter (0.35f));
+
+    zoomButton.setColour (juce::TextButton::buttonColourId, Theme::surface());
+    zoomButton.setColour (juce::TextButton::buttonOnColourId, Theme::accent());
+    zoomButton.setColour (juce::TextButton::textColourOffId, Theme::text());
+    zoomButton.setColour (juce::TextButton::textColourOnId, Theme::chrome());
+
+    eqResetButton.setColour (juce::TextButton::buttonColourId, Theme::surface());
+    eqResetButton.setColour (juce::TextButton::textColourOffId, Theme::text());
+}
+
+void PluginEditor::changeListenerCallback (juce::ChangeBroadcaster*)
+{
+    // Everything JUCE draws for us is *told* its colours, so the look and feel has to
+    // re-read them before anything repaints -- see PluginLookAndFeel::applyPalette.
+    lookAndFeel.applyPalette();
+    applyColours();
+
+    // And every child that took a colour once and kept it gets a chance to take it
+    // again. JUCE walks the tree for us; a control that snapshots colours says so by
+    // overriding lookAndFeelChanged().
+    sendLookAndFeelChange();
+
+    repaint();
+}
+
 void PluginEditor::showSettingsMenu()
 {
     juce::PopupMenu menu;
+
+    juce::PopupMenu::Item theme ("Theme" + ellipsis);
+    theme.setAction ([this] { showThemeWindow (this); });
+    menu.addItem (theme);
 
     juce::PopupMenu::Item about ("About " + juce::String (JucePlugin_Name) + ellipsis);
     about.setAction ([this] { showAboutWindow (this); });
