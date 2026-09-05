@@ -1362,9 +1362,9 @@ TEST_CASE ("An EQ handle dragged past its range stops where the parameter does",
     };
 
     // Take hold of the handle, then drag it far past the top of its range.
-    const auto plot = PlotGeometry (display.getLocalBounds().toFloat().reduced (1.0f)
-                                        .withTrimmedTop (8.0f).withTrimmedBottom (20.0f)
-                                        .withTrimmedLeft (30.0f).withTrimmedRight (30.0f));
+    const auto plot = PlotGeometry { display.getLocalBounds().toFloat().reduced (1.0f)
+                                         .withTrimmedTop (8.0f).withTrimmedBottom (20.0f)
+                                         .withTrimmedLeft (30.0f).withTrimmedRight (30.0f) };
 
     display.mouseDown (at ({ plot.freqToX (120.0f), plot.getCentreY() }));
     display.mouseDrag (at ({ plot.getRight() - 2.0f, plot.getCentreY() }));
@@ -1502,9 +1502,9 @@ TEST_CASE ("A cut bar can be dragged and stops at its range", "[ui]")
     display.onCutDragged = [&] (EqDisplay::Cut cut, float hz) { moved = cut; reported = hz; };
     display.onCutGesture = [&] (EqDisplay::Cut, bool starting) { gestures += starting ? 1 : -1; };
 
-    const auto plot = PlotGeometry (display.getLocalBounds().toFloat().reduced (1.0f)
-                                        .withTrimmedTop (8.0f).withTrimmedBottom (20.0f)
-                                        .withTrimmedLeft (30.0f).withTrimmedRight (30.0f));
+    const auto plot = PlotGeometry { display.getLocalBounds().toFloat().reduced (1.0f)
+                                         .withTrimmedTop (8.0f).withTrimmedBottom (20.0f)
+                                         .withTrimmedLeft (30.0f).withTrimmedRight (30.0f) };
 
     const auto at = [&display] (juce::Point<float> position)
     {
