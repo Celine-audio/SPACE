@@ -59,7 +59,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     wordmarkText.setJustificationType (juce::Justification::centredLeft);
     wordmarkText.setInterceptsMouseClicks (false, false);
     addChildComponent (wordmarkText);
-    wordmarkText.setVisible (wordmark == nullptr);
 
     bypassButton.setClickingTogglesState (true);
 
@@ -191,7 +190,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     if (auto* constrainer = getConstrainer())
         constrainer->setFixedAspectRatio ((double) aspectRatio);
 
-    setSize (storedWidth, storedHeight);
 
     processorRef.setUiActive (true);
 
@@ -206,6 +204,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     // disk is not touched again unless somebody asks it to be.
     Theme::palette().refreshFromDisk();
     startTimerHz (30);
+
+    // Last, and it matters. setSize fires resized(), which measures the logo and the
+    // wordmark to lay the header out -- and those are loaded in applyColours above. Done
+    // the other way round the first layout saw no artwork, placed nothing, and the
+    // header stayed empty until something else resized the window.
+    setSize (storedWidth, storedHeight);
 }
 
 PluginEditor::~PluginEditor()
@@ -514,6 +518,11 @@ void PluginEditor::applyColours()
     if (wordmark != nullptr)
         Assets::tint (*wordmark, Theme::text());
 
+    // Here rather than in the constructor: the wordmark is loaded above, so asking
+    // earlier always answered null and left the fallback text showing *behind* the
+    // artwork once it arrived.
+    wordmarkText.setVisible (wordmark == nullptr);
+
     // Explicitly chosen, so explicitly handed back: an override set once is a snapshot
     // like any other, and this one is the whole of what "bypassed" looks like.
     bypassButton.setActiveColour (Theme::danger());
@@ -631,7 +640,14 @@ void PluginEditor::resized()
         header.removeFromLeft (14);
 
         if (wordmark != nullptr)
-            place (wordmark, 14, wordmarkBounds);
+        {
+            // Sized by the letters rather than by the ink box: see Assets::xHeightFraction.
+            // A word with an ascender or a descender needs a taller box to put the same
+            // sized letters in it, and asking for the box directly is what made
+            // "gallery" read smaller than "aura" beside the same house mark.
+            const auto letters = 14.0f / Celine::Assets::xHeightFraction (*wordmark);
+            place (wordmark, juce::roundToInt (letters), wordmarkBounds);
+        }
         else
             wordmarkText.setBounds (header.removeFromLeft (200));
 

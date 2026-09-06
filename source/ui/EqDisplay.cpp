@@ -106,7 +106,11 @@ void EqDisplay::drawCuts (juce::Graphics& g, PlotGeometry plot) const
         g.setColour (Theme::consoleBackground().withAlpha (0.45f));
         g.fillRect (removed);
 
-        g.setColour (live ? Theme::accent() : Theme::accent().withAlpha (0.6f));
+        // Grey at rest, the accent when it is being pointed at or dragged -- the same
+        // pair the response display's trim grips use, and AURA's band edges. These wore
+        // the accent in both states, so a line you were not touching looked like one you
+        // were, and the two displays disagreed about what "live" looks like.
+        g.setColour (live ? Theme::accent() : Theme::line().withAlpha (0.75f));
         g.fillRect (juce::Rectangle<float> (x - 0.5f, plot.getY(), 1.5f, plot.getHeight()));
 
         // A grip at the top, the same idea as the response display's trim tabs.
@@ -115,7 +119,7 @@ void EqDisplay::drawCuts (juce::Graphics& g, PlotGeometry plot) const
 
         g.setColour (live ? Theme::accent() : Theme::surface());
         g.fillRoundedRectangle (tab, 2.5f);
-        g.setColour (live ? Theme::text() : Theme::accent().withAlpha (0.7f));
+        g.setColour (live ? Theme::text() : Theme::line().withAlpha (0.75f));
         g.drawRoundedRectangle (tab.reduced (0.5f), 2.5f, 1.0f);
     }
 }
