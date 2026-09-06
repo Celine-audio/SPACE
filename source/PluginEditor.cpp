@@ -54,16 +54,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     const auto storedWidth = (int) state.getProperty ("uiWidth", defaultWidth);
     const auto storedHeight = (int) state.getProperty ("uiHeight", defaultHeight);
 
-    logo = Assets::drawable ("logo.svg");
-
-    if (logo != nullptr)
-        Assets::tint (*logo, Theme::text());
-
-    wordmark = Assets::drawable (ProductInfo::wordmarkAsset, Assets::IfMissing::returnNull);
-
-    if (wordmark != nullptr)
-        Assets::tint (*wordmark, Theme::text());
-
     wordmarkText.setText (juce::String (JucePlugin_Name).toLowerCase(), juce::dontSendNotification);
     wordmarkText.setFont (Fonts::logo (22.0f));
     wordmarkText.setJustificationType (juce::Justification::centredLeft);
@@ -72,6 +62,11 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     wordmarkText.setVisible (wordmark == nullptr);
 
     bypassButton.setClickingTogglesState (true);
+
+    // Red, as it is in every other Céline plugin. It was left on the armed colour every
+    // other in-force control wears, which said "this is on" where the others say "this
+    // is passing your audio through untouched".
+    bypassButton.setActiveColour (Theme::danger());
     bypassButton.onClick = [this] { refreshBypassLook(); };
     addAndMakeVisible (bypassButton);
 
@@ -205,6 +200,11 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     // The theme is process-wide, so a colour changed in one window has to reach every
     // other -- including this one, when the change was made somewhere else.
     Theme::palette().addChangeListener (this);
+
+    // Once, here, rather than on a timer: another instance may have saved a theme since
+    // this module last looked, and a window opening is the moment that can matter. The
+    // disk is not touched again unless somebody asks it to be.
+    Theme::palette().refreshFromDisk();
     startTimerHz (30);
 }
 
@@ -500,6 +500,24 @@ void PluginEditor::beginFadeGesture (WaveformDisplay::Fade fade, bool starting)
 //==============================================================================
 void PluginEditor::applyColours()
 {
+    // Re-read from the binary and tinted here rather than in the constructor. Tinting
+    // writes the colour into the drawable, so a second pass would be colouring the
+    // result of the first rather than the artwork -- which is how a mark ends up stuck
+    // on whatever colour the theme happened to be when the window opened.
+    logo = Assets::drawable ("logo.svg");
+
+    if (logo != nullptr)
+        Assets::tint (*logo, Theme::text());
+
+    wordmark = Assets::drawable (ProductInfo::wordmarkAsset, Assets::IfMissing::returnNull);
+
+    if (wordmark != nullptr)
+        Assets::tint (*wordmark, Theme::text());
+
+    // Explicitly chosen, so explicitly handed back: an override set once is a snapshot
+    // like any other, and this one is the whole of what "bypassed" looks like.
+    bypassButton.setActiveColour (Theme::danger());
+
     wordmarkText.setColour (juce::Label::textColourId, Theme::text());
 
     for (auto* label : { &irTitle, &eqTitle })
